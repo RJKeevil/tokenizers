@@ -55,12 +55,15 @@ func (t *Tokenizer) Close() error {
 	return nil
 }
 
+type Offset [2]uint
+
 type Encoding struct {
 	IDs               []uint32
 	TypeIDs           []uint32
 	SpecialTokensMask []uint32
 	AttentionMask     []uint32
 	Tokens            []string
+	Offsets           []Offset
 }
 
 type EncodeOptions struct {
@@ -70,6 +73,7 @@ type EncodeOptions struct {
 	ReturnTokens            C.bool
 	ReturnSpecialTokensMask C.bool
 	ReturnAttentionMask     C.bool
+	ReturnOffsets           C.bool
 }
 
 type EncodeOption func(eo *EncodeOptions)
@@ -79,6 +83,15 @@ func uintVecToSlice(arrPtr *C.uint, len int) []uint32 {
 	slice := make([]uint32, len)
 	for i, v := range arr {
 		slice[i] = uint32(v)
+	}
+	return slice
+}
+
+func offsetVecToSlice(arrPtr *C.struct_Tuple, len int) []Offset {
+	arr := unsafe.Slice(arrPtr, len)
+	slice := make([]Offset, len)
+	for i, v := range arr {
+		slice[i] = Offset{uint(v.a), uint(v.b)}
 	}
 	return slice
 }
@@ -115,6 +128,7 @@ func WithReturnAllAttributes() EncodeOption {
 		eo.ReturnSpecialTokensMask = C.bool(true)
 		eo.ReturnAttentionMask = C.bool(true)
 		eo.ReturnTokens = C.bool(true)
+		eo.ReturnOffsets = C.bool(true)
 	}
 }
 
@@ -139,6 +153,12 @@ func WithReturnTokens() EncodeOption {
 func WithReturnAttentionMask() EncodeOption {
 	return func(eo *EncodeOptions) {
 		eo.ReturnAttentionMask = C.bool(true)
+	}
+}
+
+func WithReturnOffsets() EncodeOption {
+	return func(eo *EncodeOptions) {
+		eo.ReturnOffsets = C.bool(true)
 	}
 }
 
@@ -181,6 +201,10 @@ func (t *Tokenizer) EncodeWithOptions(str string, addSpecialTokens bool, opts ..
 
 	if encOptions.ReturnAttentionMask && res.attention_mask != nil {
 		encoding.AttentionMask = uintVecToSlice(res.attention_mask, len)
+	}
+
+	if encOptions.ReturnOffsets && res.offsets != nil {
+		encoding.Offsets = offsetVecToSlice(res.offsets, len)
 	}
 
 	return encoding
