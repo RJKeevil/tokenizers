@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/daulet/tokenizers"
+	"github.com/Knights-Analytics/tokenizers"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/daulet/tokenizers"
+	"github.com/Knights-Analytics/tokenizers"
 )
 
 func main() {
